@@ -1,10 +1,10 @@
 #!/bin/sh
-wrong_use=1        # неверное использование
-no_file=2       # исходный файл не найден
-no_output=3     # не найден комментарий Output:
-wrong_name=4   # недопустимое имя выходного файла
-cant_tmp=5       # не удалось создать временный каталог
-cant_compile=6      # ошибка компиляции/сборки
+wrong_use=1
+no_file=2
+no_output=3
+wrong_name=4
+cant_tmp=5
+cant_compile=6
 wrong_type=7
 cant_copy=8
 
