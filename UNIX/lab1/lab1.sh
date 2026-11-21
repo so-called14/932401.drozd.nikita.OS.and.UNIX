@@ -16,9 +16,6 @@ tmp=""
 
 exit_handler() {
     rc=$?
-    if [ "$rc" -eq 0 ]; then
-        rc=1
-    fi
     trap - EXIT
     if [ -n "$tmp" ] && [ -d "$tmp" ]; then
         rm -rf "$tmp"
@@ -26,7 +23,12 @@ exit_handler() {
     exit $rc
 }
 
-trap exit_handler EXIT HUP INT QUIT PIPE TERM
+trap exit_handler EXIT
+trap 'exit 1' HUP
+trap 'exit 2' INT
+trap 'exit 3' QUIT
+trap 'exit 4' PIPE
+trap 'exit 5' TERM
 
 if [ $# -ne 1 ]; then
     echo "Ошибка: укажите один файл" >&2
