@@ -27,21 +27,18 @@ int main(void)
 
     int server_fd = -1;
     int client_fd = -1;
-    /* ---------- 1. Создание TCP-сокета ---------- */
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
         perror("socket");
         return EXIT_FAILURE;
     }
 
-    /* ---------- 2. SO_REUSEADDR ---------- */
     int opt = 1;
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
         perror("setsockopt");
         goto remove;
     }
 
-    /* ---------- 3. bind ---------- */
     struct sockaddr_in address;
     memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
@@ -52,14 +49,12 @@ int main(void)
         goto remove;
     }
 
-    /* ---------- 4. listen ---------- */
     if (listen(server_fd, BACKLOG) == -1) {
         perror("listen");
         goto remove;
     }
 
     struct sigaction action;
-    /* ---------- 5. Установка обработчика ---------- */
     memset(&action, 0, sizeof(action));
     action.sa_handler = sighup_handler;
     sigemptyset(&action.sa_mask);
@@ -70,18 +65,15 @@ int main(void)
     }
 
     sigset_t blocked_mask, original_mask, empty_mask;
-    /* ---------- 6. Блокировка сигнала в основном потоке ---------- */
     sigemptyset(&blocked_mask);
     sigaddset(&blocked_mask, SIGHUP);
     if (sigprocmask(SIG_BLOCK, &blocked_mask, &original_mask) == -1) {
         perror("sigprocmask");
         goto remove;
     }
-    /* Маска для pselect: сигнал разрешён только на время ожидания. */
     sigemptyset(&empty_mask);
     fprintf(stderr, "Сервер слушает порт %d\n", PORT);
 
-    /* ---------- 7. Основной цикл ---------- */
     for (;;) {
         fd_set ready_fds;
         FD_ZERO(&ready_fds);
@@ -94,13 +86,10 @@ int main(void)
                 max_fd = client_fd;
         }
 
-        /* Атомарное ожидание: маска без SIGHUP действует только
-           внутри pselect; после возврата восстанавливается blocked_mask. */
         int ready = pselect(max_fd + 1, &ready_fds, NULL, NULL, NULL, &empty_mask);
 
         if (ready == -1) {
             if (errno == EINTR) {
-                /* Прерывание — обрабатываем сигнал. */
                 if (was_sighup) {
                     was_sighup = 0;
                     fprintf(stderr, "Получен SIGHUP\n");
@@ -111,13 +100,11 @@ int main(void)
             break;
         }
 
-        /* Обработка сигнала, если он пришёл вместе с готовностью fd. */
         if (was_sighup) {
             was_sighup = 0;
             fprintf(stderr, "Получен SIGHUP\n");
         }
 
-        /* ---------- 7a. Новое соединение ---------- */
         if (FD_ISSET(server_fd, &ready_fds)) {
             int new_fd = accept(server_fd, NULL, NULL);
             if (new_fd == -1) {
@@ -135,7 +122,6 @@ int main(void)
             }
         }
 
-        /* ---------- 7b. Данные от клиента ---------- */
         if (client_fd != -1 && FD_ISSET(client_fd, &ready_fds)) {
             char buffer[BUF_SIZE];
             ssize_t received = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -161,7 +147,6 @@ int main(void)
     exit_code = EXIT_SUCCESS;
 
 remove:
-    /* ---------- 8. Освобождение в обратном порядке ---------- */
     if (client_fd != -1)
         close(client_fd);
     if (server_fd != -1)
