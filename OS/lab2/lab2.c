@@ -108,8 +108,6 @@ int main(void)
         if (FD_ISSET(server_fd, &read_fds)) {
             int new_fd = accept(server_fd, NULL, NULL);
             if (new_fd == -1) {
-                if (errno == EINTR)
-                    continue;
                 perror("accept");
                 goto remove;
             }
@@ -137,8 +135,6 @@ int main(void)
                 client_fd = -1;
             } 
             else {
-                if (errno == EINTR)
-                    continue;
                 perror("recv");
                 close(client_fd);
                 client_fd = -1;
