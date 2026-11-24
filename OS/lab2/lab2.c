@@ -75,18 +75,18 @@ int main(void)
     fprintf(stderr, "Сервер слушает порт %d\n", PORT);
 
     for (;;) {
-        fd_set ready_fds;
-        FD_ZERO(&ready_fds);
-        FD_SET(server_fd, &ready_fds);
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(server_fd, &read_fds);
 
         int max_fd = server_fd;
         if (client_fd != -1) {
-            FD_SET(client_fd, &ready_fds);
+            FD_SET(client_fd, &read_fds);
             if (client_fd > max_fd)
                 max_fd = client_fd;
         }
 
-        int ready = pselect(max_fd + 1, &ready_fds, NULL, NULL, NULL, &empty_mask);
+        int ready = pselect(max_fd + 1, &read_fds, NULL, NULL, NULL, &empty_mask);
 
         if (ready == -1) {
             if (errno == EINTR) {
@@ -105,7 +105,7 @@ int main(void)
             fprintf(stderr, "Получен SIGHUP\n");
         }
 
-        if (FD_ISSET(server_fd, &ready_fds)) {
+        if (FD_ISSET(server_fd, &read_fds)) {
             int new_fd = accept(server_fd, NULL, NULL);
             if (new_fd == -1) {
                 if (errno == EINTR)
@@ -124,7 +124,7 @@ int main(void)
             }
         }
 
-        if (client_fd != -1 && FD_ISSET(client_fd, &ready_fds)) {
+        if (client_fd != -1 && FD_ISSET(client_fd, &read_fds)) {
             char buffer[BUF_SIZE];
             ssize_t received = recv(client_fd, buffer, sizeof(buffer), 0);
 
