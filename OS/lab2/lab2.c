@@ -97,7 +97,7 @@ int main(void)
                 continue;
             }
             perror("pselect");
-            break;
+            goto remove;
         }
 
         if (was_sighup) {
@@ -145,8 +145,6 @@ int main(void)
             }
         }
     }
-
-    exit_code = EXIT_SUCCESS;
 
 remove:
     if (client_fd != -1)
