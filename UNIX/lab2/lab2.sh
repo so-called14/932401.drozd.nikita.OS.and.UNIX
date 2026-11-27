@@ -2,17 +2,17 @@
 shared_dir="/shared"
 lock_file="$shared_dir/.lock"
 
-id_con=$(cat /proc/sys/kernel/random/uuid)
+id_con="$(date +%s)-$$"
 echo "Запуск контейнера $id_con"
 
 count=0
 exec 9>>"$lock_file"
+set -C
 while true; do
     count=$((count + 1))
     file_name=""
 
     flock -x 9
-    set -C
     
     i=1
     while true; do
