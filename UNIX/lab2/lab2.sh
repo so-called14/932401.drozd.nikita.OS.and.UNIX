@@ -12,15 +12,15 @@ while true; do
     file_name=""
 
     flock -x 9
-
+    set -C
+    
     i=1
     while true; do
         name=$(printf "%03d" $i)
         name_path="$shared_dir/$name"
 
-        if [ ! -e "$name_path" ]; then
+        if echo "$id_con-$count" > "$name_path" 2>/dev/null; then
             file_name="$name"
-            touch "$name_path"
             break
         fi
 
@@ -28,8 +28,6 @@ while true; do
     done
 
     flock -u 9
-
-    echo "$id_con-$count" > "$shared_dir/$file_name"
 
     sleep 1
     rm -f "$shared_dir/$file_name"
